@@ -4,8 +4,12 @@ import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
-    await this.$connect();
-    console.log('✅ Prisma connected to Neon PostgreSQL');
+    try {
+      await this.$connect();
+      console.log('✅ Prisma connected to Neon PostgreSQL');
+    } catch (error: any) {
+      console.error('❌ Prisma failed to connect to Neon PostgreSQL:', error.message);
+    }
   }
 
   async onModuleDestroy() {
