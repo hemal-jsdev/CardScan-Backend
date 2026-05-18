@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           Int            @id @default(autoincrement())
+  uuid         String         @unique @default(uuid())
+  fullName     String
+  email        String         @unique
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  cards        BusinessCard[]
+
+  @@map("users")
+}
+
+model BusinessCard {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Identity
+  fullName         String
+  firstName        String   @default("")
+  lastName         String   @default("")
+  jobTitle         String   @default("")
+  department       String   @default("")
+
+  // Company
+  company          String   @default("")
+  companyWebsite   String   @default("")
+
+  // Contact
+  email            String   @default("")
+  phoneWork        String   @default("")
+  phoneMobile      String   @default("")
+  phoneOther       String   @default("")
+
+  // Address
+  address          String   @default("")
+  city             String   @default("")
+  state            String   @default("")
+  country          String   @default("")
+  postalCode       String   @default("")
+
+  // Social
+  linkedIn         String   @default("")
+  twitter          String   @default("")
+
+  // Flex fields stored as JSON string
+  customFields     String   @default("{}")
+
+  // Business
+  gstin            String   @default("")
+
+  // Scanning meta
+  isBadge          Boolean  @default(false)
+  rawExtractedText String   @default("")
+  frontImageUrl    String   @default("")
+  backImageUrl     String   @default("")
+  confidence       Float    @default(0.0)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([isBadge])
+  @@map("business_cards")
+}
