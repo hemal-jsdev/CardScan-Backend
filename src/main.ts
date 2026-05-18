@@ -2,9 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express from 'express';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+const server = express();
+
+export const createNestServer = async (expressInstance: any) => {
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressInstance));
 
   // ── Global Validation Pipe ──────────────────────────────────────────────────
   app.useGlobalPipes(
@@ -34,9 +38,20 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
+  await app.init();
+};
+
+// Bootstrap if running locally (not in serverless environment)
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   const port = process.env.PORT ?? 3000;
-  await app.listen(port, '0.0.0.0');
-  console.log(`🚀 CardScan API running on: http://localhost:${port}/api/v1`);
-  console.log(`📖 Swagger docs: http://localhost:${port}/api/docs`);
+  server.listen(port, () => {
+    console.log(`🚀 CardScan API running locally on: http://localhost:${port}/api/v1`);
+    console.log(`📖 Swagger docs: http://localhost:${port}/api/docs`);
+  });
 }
-bootstrap();
+
+// Initialize serverless server immediately
+createNestServer(server);
+
+// Export express server instance for Vercel Serverless Integration
+export default server;
