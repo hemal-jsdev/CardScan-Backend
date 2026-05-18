@@ -408,16 +408,4 @@ export class CardsService {
     await workbook.xlsx.write(response);
     response.end();
   }
-
-  async findOnePublic(id: number) {
-    const card = await this.prisma.businessCard.findFirst({
-      where: { id, deletedAt: null },
-    });
-
-    if (!card) {
-      throw new NotFoundException(`Business card with ID ${id} not found.`);
-    }
-
-    return this.mapCardResponse(card);
-  }
 }
