@@ -34,7 +34,14 @@ const createNestServer = async (expressInstance) => {
         .addBearerAuth()
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('api/docs', app, document);
+    const cdnBase = 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0';
+    swagger_1.SwaggerModule.setup('api/docs', app, document, {
+        customCssUrl: `${cdnBase}/swagger-ui.min.css`,
+        customJs: [
+            `${cdnBase}/swagger-ui-bundle.min.js`,
+            `${cdnBase}/swagger-ui-standalone-preset.min.js`,
+        ],
+    });
     await app.init();
     isInitialized = true;
 };
