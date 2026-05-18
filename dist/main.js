@@ -1,11 +1,22 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.createNestServer = void 0;
+require("reflect-metadata");
 const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
-async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+const platform_express_1 = require("@nestjs/platform-express");
+const express_1 = __importDefault(require("express"));
+const server = (0, express_1.default)();
+let isInitialized = false;
+const createNestServer = async (expressInstance) => {
+    if (isInitialized)
+        return;
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_express_1.ExpressAdapter(expressInstance));
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
@@ -24,10 +35,18 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup('api/docs', app, document);
+    await app.init();
+    isInitialized = true;
+};
+exports.createNestServer = createNestServer;
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     const port = process.env.PORT ?? 3000;
-    await app.listen(port, '0.0.0.0');
-    console.log(`🚀 CardScan API running on: http://localhost:${port}/api/v1`);
-    console.log(`📖 Swagger docs: http://localhost:${port}/api/docs`);
+    (0, exports.createNestServer)(server).then(() => {
+        server.listen(port, () => {
+            console.log(`🚀 CardScan API running locally on: http://localhost:${port}/api/v1`);
+            console.log(`📖 Swagger docs: http://localhost:${port}/api/docs`);
+        });
+    });
 }
-bootstrap();
+exports.default = server;
 //# sourceMappingURL=main.js.map
