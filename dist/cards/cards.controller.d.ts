@@ -29,6 +29,8 @@ export declare class CardsController {
         data: any[];
     }>;
     export(userId: number, query: QueryCardsDto, res: any): Promise<void>;
+    renderSharePage(id: number, res: any): Promise<any>;
+    downloadVCard(id: number, res: any): Promise<any>;
     update(userId: number, id: number, updateCardDto: UpdateCardDto): Promise<{
         success: boolean;
         message: string;
@@ -39,4 +41,7 @@ export declare class CardsController {
         message: string;
         deletedCardId: number;
     }>;
+    private generateVCardString;
+    private generateSvgQr;
+    private generateShareHtml;
 }
