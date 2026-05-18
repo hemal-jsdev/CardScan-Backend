@@ -57,8 +57,5 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   });
 }
 
-// Export express serverless handler
-export default async (req: any, res: any) => {
-  await createNestServer(server);
-  return server(req, res);
-};
+// Export express server instance
+export default server;
