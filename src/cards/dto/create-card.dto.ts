@@ -44,7 +44,7 @@ export class CreateCardDto {
   companyWebsite?: string;
 
   @ApiProperty({ description: 'Email address', required: false, example: 'aryan.sharma@hindustantech.in' })
-  @IsEmail({}, { message: 'Must be a valid Email pattern.' })
+  @IsString()
   @IsOptional()
   email?: string;
 

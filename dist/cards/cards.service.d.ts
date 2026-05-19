@@ -36,5 +36,4 @@ export declare class CardsService {
         data: any[];
     }>;
     exportToExcel(userId: number, query: QueryCardsDto, response: Response): Promise<void>;
-    findOnePublic(id: number): Promise<any>;
 }

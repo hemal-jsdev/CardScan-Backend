@@ -90,7 +90,7 @@ __decorate([
 ], CreateCardDto.prototype, "companyWebsite", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Email address', required: false, example: 'aryan.sharma@hindustantech.in' }),
-    (0, class_validator_1.IsEmail)({}, { message: 'Must be a valid Email pattern.' }),
+    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateCardDto.prototype, "email", void 0);

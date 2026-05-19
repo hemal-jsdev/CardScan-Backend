@@ -387,15 +387,6 @@ let CardsService = class CardsService {
         await workbook.xlsx.write(response);
         response.end();
     }
-    async findOnePublic(id) {
-        const card = await this.prisma.businessCard.findFirst({
-            where: { id, deletedAt: null },
-        });
-        if (!card) {
-            throw new common_1.NotFoundException(`Business card with ID ${id} not found.`);
-        }
-        return this.mapCardResponse(card);
-    }
 };
 exports.CardsService = CardsService;
 exports.CardsService = CardsService = __decorate([
