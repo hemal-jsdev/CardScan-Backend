@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
@@ -5,7 +6,8 @@ import { QueryCardsDto } from './dto/query-cards.dto';
 import { Response } from 'express';
 export declare class CardsService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private configService;
+    constructor(prisma: PrismaService, configService: ConfigService);
     private parseCustomFields;
     private mapCardResponse;
     create(userId: number, dto: CreateCardDto): Promise<{
@@ -36,4 +38,10 @@ export declare class CardsService {
         data: any[];
     }>;
     exportToExcel(userId: number, query: QueryCardsDto, response: Response): Promise<void>;
+    refineAddress(rawAddress: string): Promise<any>;
+    extractVision(imageBase64: string): Promise<{
+        success: boolean;
+        message: string;
+        data: any;
+    }>;
 }

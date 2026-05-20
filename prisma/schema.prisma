@@ -31,8 +31,6 @@ model BusinessCard {
 
   // Identity
   fullName         String
-  firstName        String   @default("")
-  lastName         String   @default("")
   jobTitle         String   @default("")
   department       String   @default("")
 
@@ -70,12 +68,30 @@ model BusinessCard {
   backImageUrl     String   @default("")
   confidence       Float    @default(0.0)
 
+  // Custom tags
+  tags             String   @default("")
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   deletedAt        DateTime?
+
+  notes            Note[]
 
   @@index([userId])
   @@index([createdAt(sort: Desc)])
   @@index([isBadge])
   @@map("business_cards")
+}
+
+model Note {
+  id        Int          @id @default(autoincrement())
+  cardId    Int
+  card      BusinessCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([cardId])
+  @@index([createdAt(sort: Desc)])
+  @@map("notes")
 }

@@ -70,11 +70,12 @@ let AuthService = class AuthService {
                 passwordHash,
             },
         });
-        const token = await this.generateToken(user.id, user.email);
+        const { token, refreshToken } = await this.generateTokenPair(user.id, user.email);
         return {
             success: true,
             message: 'Account successfully registered.',
             token,
+            refreshToken,
             user: {
                 id: user.id,
                 uuid: user.uuid,
@@ -94,11 +95,12 @@ let AuthService = class AuthService {
         if (!isMatch) {
             throw new common_1.UnauthorizedException('Invalid email or password.');
         }
-        const token = await this.generateToken(user.id, user.email);
+        const { token, refreshToken } = await this.generateTokenPair(user.id, user.email);
         return {
             success: true,
             message: 'Successfully logged in.',
             token,
+            refreshToken,
             user: {
                 id: user.id,
                 uuid: user.uuid,
@@ -107,9 +109,35 @@ let AuthService = class AuthService {
             },
         };
     }
-    async generateToken(userId, email) {
-        const payload = { sub: userId, email };
-        return this.jwtService.signAsync(payload);
+    async refresh(refreshToken) {
+        try {
+            const payload = await this.jwtService.verifyAsync(refreshToken);
+            if (payload.type !== 'refresh') {
+                throw new common_1.UnauthorizedException('Invalid token type.');
+            }
+            const user = await this.prisma.user.findUnique({
+                where: { id: payload.sub },
+            });
+            if (!user) {
+                throw new common_1.UnauthorizedException('User session expired or user not found.');
+            }
+            const tokens = await this.generateTokenPair(user.id, user.email);
+            return {
+                success: true,
+                message: 'Tokens refreshed successfully.',
+                ...tokens,
+            };
+        }
+        catch (e) {
+            throw new common_1.UnauthorizedException('Invalid or expired refresh token.');
+        }
+    }
+    async generateTokenPair(userId, email) {
+        const accessPayload = { sub: userId, email, type: 'access' };
+        const refreshPayload = { sub: userId, email, type: 'refresh' };
+        const token = await this.jwtService.signAsync(accessPayload, { expiresIn: '15m' });
+        const refreshToken = await this.jwtService.signAsync(refreshPayload, { expiresIn: '30d' });
+        return { token, refreshToken };
     }
 };
 exports.AuthService = AuthService;

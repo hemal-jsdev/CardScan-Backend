@@ -34,13 +34,14 @@ export class AuthService {
       },
     });
 
-    // 4. Generate JWT token
-    const token = await this.generateToken(user.id, user.email);
+    // 4. Generate JWT token pair
+    const { token, refreshToken } = await this.generateTokenPair(user.id, user.email);
 
     return {
       success: true,
       message: 'Account successfully registered.',
       token,
+      refreshToken,
       user: {
         id: user.id,
         uuid: user.uuid,
@@ -65,13 +66,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
-    // 3. Generate JWT token
-    const token = await this.generateToken(user.id, user.email);
+    // 3. Generate JWT token pair
+    const { token, refreshToken } = await this.generateTokenPair(user.id, user.email);
 
     return {
       success: true,
       message: 'Successfully logged in.',
       token,
+      refreshToken,
       user: {
         id: user.id,
         uuid: user.uuid,
@@ -81,8 +83,38 @@ export class AuthService {
     };
   }
 
-  private async generateToken(userId: number, email: string): Promise<string> {
-    const payload = { sub: userId, email };
-    return this.jwtService.signAsync(payload);
+  async refresh(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken);
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type.');
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+      if (!user) {
+        throw new UnauthorizedException('User session expired or user not found.');
+      }
+
+      const tokens = await this.generateTokenPair(user.id, user.email);
+      return {
+        success: true,
+        message: 'Tokens refreshed successfully.',
+        ...tokens,
+      };
+    } catch (e) {
+      throw new UnauthorizedException('Invalid or expired refresh token.');
+    }
+  }
+
+  private async generateTokenPair(userId: number, email: string) {
+    const accessPayload = { sub: userId, email, type: 'access' };
+    const refreshPayload = { sub: userId, email, type: 'refresh' };
+
+    const token = await this.jwtService.signAsync(accessPayload, { expiresIn: '15m' });
+    const refreshToken = await this.jwtService.signAsync(refreshPayload, { expiresIn: '30d' });
+
+    return { token, refreshToken };
   }
 }

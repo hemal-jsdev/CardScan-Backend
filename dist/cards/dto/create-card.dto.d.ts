@@ -1,7 +1,5 @@
 export declare class CreateCardDto {
     fullName: string;
-    firstName?: string;
-    lastName?: string;
     jobTitle?: string;
     department?: string;
     company?: string;

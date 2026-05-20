@@ -23,6 +23,8 @@ const cloudinary_service_1 = require("./cloudinary.service");
 const create_card_dto_1 = require("./dto/create-card.dto");
 const update_card_dto_1 = require("./dto/update-card.dto");
 const query_cards_dto_1 = require("./dto/query-cards.dto");
+const refine_address_dto_1 = require("./dto/refine-address.dto");
+const extract_vision_dto_1 = require("./dto/extract-vision.dto");
 let CardsController = class CardsController {
     cardsService;
     cloudinaryService;
@@ -55,6 +57,12 @@ let CardsController = class CardsController {
     }
     async remove(userId, id) {
         return this.cardsService.remove(userId, id);
+    }
+    async refineAddress(refineAddressDto) {
+        return this.cardsService.refineAddress(refineAddressDto.address);
+    }
+    async extractVision(extractVisionDto) {
+        return this.cardsService.extractVision(extractVisionDto.imageBase64);
     }
 };
 exports.CardsController = CardsController;
@@ -126,6 +134,22 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", Promise)
 ], CardsController.prototype, "remove", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Refine a raw scanned address using Gemini' }),
+    (0, common_1.Post)('refine-address'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [refine_address_dto_1.RefineAddressDto]),
+    __metadata("design:returntype", Promise)
+], CardsController.prototype, "refineAddress", null);
+__decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Extract details from a business card image using Gemini Vision' }),
+    (0, common_1.Post)('extract-vision'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [extract_vision_dto_1.ExtractVisionDto]),
+    __metadata("design:returntype", Promise)
+], CardsController.prototype, "extractVision", null);
 exports.CardsController = CardsController = __decorate([
     (0, swagger_1.ApiTags)('Business Cards'),
     (0, swagger_1.ApiBearerAuth)(),

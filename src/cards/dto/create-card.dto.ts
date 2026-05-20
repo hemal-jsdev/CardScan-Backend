@@ -8,17 +8,6 @@ export class CreateCardDto {
   @MaxLength(150)
   fullName: string;
 
-  @ApiProperty({ description: 'First name', required: false, example: 'Aryan' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(75)
-  firstName?: string;
-
-  @ApiProperty({ description: 'Last name', required: false, example: 'Sharma' })
-  @IsString()
-  @IsOptional()
-  @MaxLength(75)
-  lastName?: string;
 
   @ApiProperty({ description: 'Job title', required: false, example: 'Lead System Architect' })
   @IsString()

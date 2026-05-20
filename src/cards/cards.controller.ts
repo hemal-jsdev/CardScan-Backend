@@ -24,6 +24,8 @@ import { CloudinaryService } from './cloudinary.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { QueryCardsDto } from './dto/query-cards.dto';
+import { RefineAddressDto } from './dto/refine-address.dto';
+import { ExtractVisionDto } from './dto/extract-vision.dto';
 
 @ApiTags('Business Cards')
 @ApiBearerAuth()
@@ -107,5 +109,17 @@ export class CardsController {
     @Param('id', ParseIntPipe) id: number
   ) {
     return this.cardsService.remove(userId, id);
+  }
+
+  @ApiOperation({ summary: 'Refine a raw scanned address using Gemini' })
+  @Post('refine-address')
+  async refineAddress(@Body() refineAddressDto: RefineAddressDto) {
+    return this.cardsService.refineAddress(refineAddressDto.address);
+  }
+
+  @ApiOperation({ summary: 'Extract details from a business card image using Gemini Vision' })
+  @Post('extract-vision')
+  async extractVision(@Body() extractVisionDto: ExtractVisionDto) {
+    return this.cardsService.extractVision(extractVisionDto.imageBase64);
   }
 }

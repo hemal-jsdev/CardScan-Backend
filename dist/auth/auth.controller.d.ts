@@ -1,13 +1,21 @@
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
+    refresh(dto: RefreshTokenDto): Promise<{
+        token: string;
+        refreshToken: string;
+        success: boolean;
+        message: string;
+    }>;
     signup(dto: SignupDto): Promise<{
         success: boolean;
         message: string;
         token: string;
+        refreshToken: string;
         user: {
             id: number;
             uuid: string;
@@ -19,6 +27,7 @@ export declare class AuthController {
         success: boolean;
         message: string;
         token: string;
+        refreshToken: string;
         user: {
             id: number;
             uuid: string;

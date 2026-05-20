@@ -10,6 +10,7 @@ export declare class AuthService {
         success: boolean;
         message: string;
         token: string;
+        refreshToken: string;
         user: {
             id: number;
             uuid: string;
@@ -21,6 +22,7 @@ export declare class AuthService {
         success: boolean;
         message: string;
         token: string;
+        refreshToken: string;
         user: {
             id: number;
             uuid: string;
@@ -28,5 +30,11 @@ export declare class AuthService {
             email: string;
         };
     }>;
-    private generateToken;
+    refresh(refreshToken: string): Promise<{
+        token: string;
+        refreshToken: string;
+        success: boolean;
+        message: string;
+    }>;
+    private generateTokenPair;
 }

@@ -14,8 +14,6 @@ const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateCardDto {
     fullName;
-    firstName;
-    lastName;
     jobTitle;
     department;
     company;
@@ -47,20 +45,6 @@ __decorate([
     (0, class_validator_1.MaxLength)(150),
     __metadata("design:type", String)
 ], CreateCardDto.prototype, "fullName", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ description: 'First name', required: false, example: 'Aryan' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(75),
-    __metadata("design:type", String)
-], CreateCardDto.prototype, "firstName", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Last name', required: false, example: 'Sharma' }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.MaxLength)(75),
-    __metadata("design:type", String)
-], CreateCardDto.prototype, "lastName", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Job title', required: false, example: 'Lead System Architect' }),
     (0, class_validator_1.IsString)(),

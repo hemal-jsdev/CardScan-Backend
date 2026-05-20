@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
@@ -8,7 +9,10 @@ import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class CardsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   private parseCustomFields(customFieldsStr: string): Record<string, any> {
     try {
@@ -32,8 +36,6 @@ export class CardsService {
       data: {
         userId,
         fullName: dto.fullName,
-        firstName: dto.firstName ?? '',
-        lastName: dto.lastName ?? '',
         jobTitle: dto.jobTitle ?? '',
         department: dto.department ?? '',
         company: dto.company ?? '',
@@ -86,8 +88,6 @@ export class CardsService {
       where: { id },
       data: {
         fullName: dto.fullName ?? card.fullName,
-        firstName: dto.firstName ?? card.firstName,
-        lastName: dto.lastName ?? card.lastName,
         jobTitle: dto.jobTitle ?? card.jobTitle,
         department: dto.department ?? card.department,
         company: dto.company ?? card.company,
@@ -273,10 +273,7 @@ export class CardsService {
 
     // Define column headers and sizes
     worksheet.columns = [
-      { header: 'Card ID', key: 'id', width: 12 },
       { header: 'Full Name', key: 'fullName', width: 22 },
-      { header: 'First Name', key: 'firstName', width: 15 },
-      { header: 'Last Name', key: 'lastName', width: 15 },
       { header: 'Job Title', key: 'jobTitle', width: 20 },
       { header: 'Department', key: 'department', width: 18 },
       { header: 'Company', key: 'company', width: 22 },
@@ -297,6 +294,7 @@ export class CardsService {
       { header: 'OCR Confidence %', key: 'confidence', width: 18 },
       { header: 'Extracted Text', key: 'rawText', width: 35 },
       { header: 'Front Image Link', key: 'frontImage', width: 25 },
+      { header: 'Tags', key: 'tags', width: 20 },
       { header: 'Created Date', key: 'createdAt', width: 20 },
     ];
 
@@ -312,10 +310,7 @@ export class CardsService {
       const createdDateFormatted = new Date(card.createdAt).toISOString().replace('T', ' ').substring(0, 16);
 
       worksheet.addRow({
-        id: card.id,
         fullName: card.fullName,
-        firstName: card.firstName,
-        lastName: card.lastName,
         jobTitle: card.jobTitle,
         department: card.department,
         company: card.company,
@@ -336,6 +331,7 @@ export class CardsService {
         confidence: confidenceFormatted,
         rawText: card.rawExtractedText || customFieldsText.trim(),
         frontImage: card.frontImageUrl,
+        tags: card.tags,
         createdAt: createdDateFormatted,
       });
     });
@@ -408,4 +404,155 @@ export class CardsService {
     await workbook.xlsx.write(response);
     response.end();
   }
+
+  async refineAddress(rawAddress: string) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new BadRequestException('Gemini API key is not configured on the server.');
+    }
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Parse the following address into its components. Clean up any scanning typos: ${rawAddress}`,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  city: { type: 'STRING', description: 'Name of the city, town or locality' },
+                  state: { type: 'STRING', description: 'Name of the state, province or region' },
+                  country: { type: 'STRING', description: 'Full name of the country' },
+                  postalCode: { type: 'STRING', description: 'ZIP or postal code if present' },
+                },
+                required: ['city', 'state', 'country'],
+              },
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.statusText}`);
+      }
+
+      const responseData: any = await response.json();
+      const text = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new Error('Invalid response structure from Gemini API');
+      }
+
+      return JSON.parse(text);
+    } catch (error) {
+      throw new BadRequestException(`Address refinement failed: ${error.message}`);
+    }
+  }
+
+  async extractVision(imageBase64: string) {
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    if (!apiKey) {
+      throw new BadRequestException('Gemini API key is not configured on the server.');
+    }
+
+    let mimeType = 'image/jpeg';
+    let data = imageBase64;
+    if (imageBase64.startsWith('data:')) {
+      const parts = imageBase64.split(';base64,');
+      if (parts.length === 2) {
+        mimeType = parts[0].replace('data:', '');
+        data = parts[1];
+      }
+    }
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Analyze this business card image and extract all contact details. Return values as empty strings if they are not found. Return a confidence score between 0.0 and 1.0 reflecting how clear the text was. Output MUST be valid JSON matching the schema.`,
+                  },
+                  {
+                    inlineData: {
+                      mimeType,
+                      data,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  fullName: { type: 'STRING', description: 'The full name of the contact person.' },
+                  jobTitle: { type: 'STRING', description: 'The title or role of the person.' },
+                  department: { type: 'STRING', description: 'The department (e.g. Sales, Engineering).' },
+                  company: { type: 'STRING', description: 'The company name.' },
+                  companyWebsite: { type: 'STRING', description: 'The website address.' },
+                  email: { type: 'STRING', description: 'The email address.' },
+                  phoneWork: { type: 'STRING', description: 'The work phone number.' },
+                  phoneMobile: { type: 'STRING', description: 'The mobile/cell phone number.' },
+                  phoneOther: { type: 'STRING', description: 'Any other phone numbers listed.' },
+                  address: { type: 'STRING', description: 'The street address.' },
+                  city: { type: 'STRING', description: 'The city.' },
+                  state: { type: 'STRING', description: 'The state or province.' },
+                  country: { type: 'STRING', description: 'The country.' },
+                  postalCode: { type: 'STRING', description: 'The ZIP/postal code.' },
+                  linkedIn: { type: 'STRING', description: 'The LinkedIn profile URL or username.' },
+                  twitter: { type: 'STRING', description: 'The Twitter/X profile URL or username.' },
+                  gstin: { type: 'STRING', description: 'The GSTIN number if present (India Tax ID, starts with two digits followed by PAN).' },
+                  rawExtractedText: { type: 'STRING', description: 'Clean concatenation of all text found on the card.' },
+                  confidence: { type: 'NUMBER', description: 'Confidence score between 0.0 and 1.0.' }
+                },
+                required: ['fullName', 'company', 'email', 'phoneMobile', 'confidence'],
+              },
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Gemini API error: ${response.statusText}`);
+      }
+
+      const responseData: any = await response.json();
+      const text = responseData?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new Error('Invalid response structure from Gemini API');
+      }
+
+      const result = JSON.parse(text);
+      return {
+        success: true,
+        message: 'AI Card extraction successful',
+        data: result,
+      };
+    } catch (error) {
+      throw new BadRequestException(`AI extraction failed: ${error.message}`);
+    }
+  }
 }
+

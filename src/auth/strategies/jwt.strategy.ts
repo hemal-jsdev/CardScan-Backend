@@ -17,7 +17,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: { sub: number; email: string }) {
+  async validate(payload: { sub: number; email: string; type?: string }) {
+    // If the token has a type, it must be 'access' to authorize requests
+    if (payload.type && payload.type !== 'access') {
+      throw new UnauthorizedException('Invalid token type.');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
     });

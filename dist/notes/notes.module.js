@@ -6,25 +6,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AppModule = void 0;
+exports.NotesModule = void 0;
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
-const prisma_module_1 = require("./prisma/prisma.module");
-const auth_module_1 = require("./auth/auth.module");
-const cards_module_1 = require("./cards/cards.module");
-const notes_module_1 = require("./notes/notes.module");
-let AppModule = class AppModule {
+const notes_service_1 = require("./notes.service");
+const notes_controller_1 = require("./notes.controller");
+const prisma_module_1 = require("../prisma/prisma.module");
+const auth_module_1 = require("../auth/auth.module");
+let NotesModule = class NotesModule {
 };
-exports.AppModule = AppModule;
-exports.AppModule = AppModule = __decorate([
+exports.NotesModule = NotesModule;
+exports.NotesModule = NotesModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            config_1.ConfigModule.forRoot({ isGlobal: true }),
-            prisma_module_1.PrismaModule,
-            auth_module_1.AuthModule,
-            cards_module_1.CardsModule,
-            notes_module_1.NotesModule,
-        ],
+        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
+        controllers: [notes_controller_1.NotesController],
+        providers: [notes_service_1.NotesService],
     })
-], AppModule);
-//# sourceMappingURL=app.module.js.map
+], NotesModule);
+//# sourceMappingURL=notes.module.js.map
