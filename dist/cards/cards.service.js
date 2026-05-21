@@ -295,8 +295,10 @@ let CardsService = class CardsService {
             { header: 'OCR Confidence %', key: 'confidence', width: 18 },
             { header: 'Extracted Text', key: 'rawText', width: 35 },
             { header: 'Front Image Link', key: 'frontImage', width: 25 },
+            { header: 'Back Image Link', key: 'backImage', width: 25 },
             { header: 'Tags', key: 'tags', width: 20 },
             { header: 'Created Date', key: 'createdAt', width: 20 },
+            { header: 'Updated At', key: 'updatedAt', width: 20 },
         ];
         cards.forEach(card => {
             const parsedFields = this.parseCustomFields(card.customFields);
@@ -306,6 +308,7 @@ let CardsService = class CardsService {
             });
             const confidenceFormatted = `${(card.confidence * 100).toFixed(1)}%`;
             const createdDateFormatted = new Date(card.createdAt).toISOString().replace('T', ' ').substring(0, 16);
+            const updatedDateFormatted = new Date(card.updatedAt).toISOString().replace('T', ' ').substring(0, 16);
             worksheet.addRow({
                 fullName: card.fullName,
                 jobTitle: card.jobTitle,
@@ -328,8 +331,10 @@ let CardsService = class CardsService {
                 confidence: confidenceFormatted,
                 rawText: card.rawExtractedText || customFieldsText.trim(),
                 frontImage: card.frontImageUrl,
+                backImage: card.backImageUrl,
                 tags: card.tags,
                 createdAt: createdDateFormatted,
+                updatedAt: updatedDateFormatted,
             });
         });
         const headerRow = worksheet.getRow(1);
