@@ -19,6 +19,8 @@ model User {
   passwordHash String
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+  geminiApiKey String?
+  geminiModel  String?
   cards        BusinessCard[]
 
   @@map("users")

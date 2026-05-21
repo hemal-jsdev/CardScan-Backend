@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { UpdateAiConfigDto } from './dto/update-ai-config.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GetUser } from './decorators/get-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
@@ -51,5 +52,28 @@ export class AuthController {
       success: true,
       user,
     };
+  }
+
+  @Get('ai-config')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get user Gemini configurations' })
+  @ApiResponse({ status: 200, description: 'Gemini configurations returned.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired access token.' })
+  async getAiConfig(@GetUser() user: { id: number }) {
+    return this.authService.getAiConfig(user.id);
+  }
+
+  @Patch('ai-config')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update user Gemini configurations' })
+  @ApiResponse({ status: 200, description: 'Gemini configurations updated.' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired access token.' })
+  async updateAiConfig(
+    @GetUser() user: { id: number },
+    @Body() dto: UpdateAiConfigDto,
+  ) {
+    return this.authService.updateAiConfig(user.id, dto);
   }
 }

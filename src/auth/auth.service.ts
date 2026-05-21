@@ -2,6 +2,7 @@ import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/co
 import { PrismaService } from '../prisma/prisma.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateAiConfigDto } from './dto/update-ai-config.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 
@@ -116,5 +117,36 @@ export class AuthService {
     const refreshToken = await this.jwtService.signAsync(refreshPayload, { expiresIn: '30d' });
 
     return { token, refreshToken };
+  }
+
+  async getAiConfig(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        geminiApiKey: true,
+        geminiModel: true,
+      },
+    });
+    return {
+      success: true,
+      geminiApiKey: user?.geminiApiKey || '',
+      geminiModel: user?.geminiModel || 'gemini-3.1-flash-lite',
+    };
+  }
+
+  async updateAiConfig(userId: number, dto: UpdateAiConfigDto) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        geminiApiKey: dto.geminiApiKey,
+        geminiModel: dto.geminiModel,
+      },
+    });
+    return {
+      success: true,
+      message: 'AI Configuration successfully updated.',
+      geminiApiKey: user.geminiApiKey || '',
+      geminiModel: user.geminiModel || 'gemini-3.1-flash-lite',
+    };
   }
 }

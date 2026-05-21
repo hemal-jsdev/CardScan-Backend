@@ -139,6 +139,35 @@ let AuthService = class AuthService {
         const refreshToken = await this.jwtService.signAsync(refreshPayload, { expiresIn: '30d' });
         return { token, refreshToken };
     }
+    async getAiConfig(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                geminiApiKey: true,
+                geminiModel: true,
+            },
+        });
+        return {
+            success: true,
+            geminiApiKey: user?.geminiApiKey || '',
+            geminiModel: user?.geminiModel || 'gemini-3.1-flash-lite',
+        };
+    }
+    async updateAiConfig(userId, dto) {
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                geminiApiKey: dto.geminiApiKey,
+                geminiModel: dto.geminiModel,
+            },
+        });
+        return {
+            success: true,
+            message: 'AI Configuration successfully updated.',
+            geminiApiKey: user.geminiApiKey || '',
+            geminiModel: user.geminiModel || 'gemini-3.1-flash-lite',
+        };
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
